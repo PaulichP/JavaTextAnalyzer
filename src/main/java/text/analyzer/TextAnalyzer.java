@@ -13,23 +13,28 @@ import java.util.*;
 
 public class TextAnalyzer {
 
-
+    // Путь для вывода статистики по умолчанию
     private static final String DEFAULT_OUTPUT_PATH = "full_statistics.txt";
+    // Запрещенные символы
     private static final List<Character> FORBIDDEN_CHARACTERS = Arrays.asList(',', ';', ':', '.', '!', '?', '/', '-');
 
+    // Главный метод
     public static void main(String[] args) {
         try {
+            // Настройка уровня логгирования
             org.apache.logging.log4j.core.config.Configurator.setLevel("org.apache.logging.log4j", org.apache.logging.log4j.Level.ERROR);
 
             Scanner scanner = new Scanner(System.in);
             System.out.print("Введите путь к файлу для анализа: ");
             String filePath = scanner.nextLine();
 
+            // Проверка наличия файла
             if (isFileExists(filePath)) {
                 System.out.println("Файл не найден. Проверьте путь и повторите попытку.");
                 return;
             }
 
+            // Если файл в формате doc/docx, конвертируем в txt
             if (filePath.endsWith(".doc") || filePath.endsWith(".docx")) {
                 System.out.println("Обнаружен файл формата doc/docx. Конвертация в txt...");
 
@@ -41,14 +46,17 @@ public class TextAnalyzer {
             System.out.print("Введите путь к файлу словаря (JSON): ");
             String dictionaryPath = scanner.nextLine();
 
+            // Проверка наличия файла словаря
             if (isFileExists(dictionaryPath)) {
                 System.out.println("Файл не найден. Проверьте путь и повторите попытку.");
                 return;
             }
 
+            // Создание экземпляра анализатора
             TextAnalyzer analyzer = new TextAnalyzer(dictionaryPath);
             boolean exit = false;
 
+            // Основной цикл программы
             while (!exit) {
                 System.out.println("\nВыберите действие:");
                 System.out.println("1. Определение темы текста");
@@ -63,11 +71,13 @@ public class TextAnalyzer {
                     int choice = Integer.parseInt(choiceInput);
                     switch (choice) {
                         case 1:
+                            // Анализ текста и определение темы
                             String theme = analyzer.analyzeFile(filePath);
                             System.out.println("Тема текста: " + theme);
                             break;
 
                         case 2:
+                            // Отображение самых часто используемых слов
                             int topWordsCount;
                             try {
                                 System.out.println("Введите количество слов для отображения: ");
@@ -100,6 +110,7 @@ public class TextAnalyzer {
                             break;
 
                         case 3:
+                            // Запись полной статистики в файл
                             System.out.print("Введите путь к файлу для записи статистики (по умолчанию - рядом с программой): ");
                             String outputFilePath = scanner.nextLine();
                             analyzer.writeFullStatisticsToFile(filePath, outputFilePath);
@@ -123,12 +134,14 @@ public class TextAnalyzer {
         }
     }
 
+    // Конструктор класса анализатора
     private Map<String, String[]> dictionary;
 
     public TextAnalyzer(String dictionaryPath) throws IOException {
         this.dictionary = loadDictionary(dictionaryPath);
     }
 
+    // Метод для отображения гистограммы
     public void displayHistogram(Map<String, Integer> wordOccurrences, int topWordsCount) {
         System.out.println("\nГистограмма:");
 
@@ -155,6 +168,7 @@ public class TextAnalyzer {
         }
     }
 
+    // Загрузка словаря из файла JSON
     private Map<String, String[]> loadDictionary(String filePath) throws IOException {
         Gson gson = new Gson();
         JsonArray jsonArray = JsonParser.parseReader(new FileReader(filePath)).getAsJsonArray();
@@ -171,7 +185,7 @@ public class TextAnalyzer {
         return dictionary;
     }
 
-
+    // Анализ файла и определение темы
     public String analyzeFile(String filePath) throws IOException {
         Scanner fileScanner = new Scanner(new File(filePath));
         Map<String, Integer> themeOccurrences = new HashMap<>();
@@ -194,6 +208,7 @@ public class TextAnalyzer {
         return findMaxOccurrenceTheme(themeOccurrences);
     }
 
+    // Поиск темы с максимальным количеством вхождений
     private String findMaxOccurrenceTheme(Map<String, Integer> themeOccurrences) {
         String maxTheme = null;
         int maxOccurrences = 0;
@@ -208,6 +223,7 @@ public class TextAnalyzer {
         return maxTheme;
     }
 
+    // Отображение часто используемых слов
     public void displayTopWords(String filePath, int topWordsCount, boolean showHistogram) throws IOException {
         Scanner fileScanner = new Scanner(new File(filePath));
         Map<String, Integer> wordOccurrences = new HashMap<>();
@@ -237,6 +253,7 @@ public class TextAnalyzer {
         }
     }
 
+    // Запись полной статистики в файл
     public void writeFullStatisticsToFile(String filePath, String outputFilePath) throws IOException {
         Scanner fileScanner = new Scanner(new File(filePath));
         Map<String, Integer> wordOccurrences = new HashMap<>();
@@ -267,6 +284,7 @@ public class TextAnalyzer {
         System.out.println("Статистика записана в файл: " + absolutePath);
     }
 
+    // Удаление запрещенных символов из текста
     private String removeForbiddenCharacters(String word) {
         for (char forbiddenChar : FORBIDDEN_CHARACTERS) {
             word = word.replace(String.valueOf(forbiddenChar), "");
@@ -274,6 +292,7 @@ public class TextAnalyzer {
         return word;
     }
 
+    // Конвертация doc/docx файла в txt
     private static String convertDocToTxt(String docFilePath) {
         String txtFilePath = docFilePath.replaceFirst("[.][^.]+$", ".txt");
 
@@ -298,6 +317,7 @@ public class TextAnalyzer {
         return txtFilePath;
     }
 
+    // Запись текста в файл
     private static void saveToFile(String filePath, String content) {
         try (PrintWriter writer = new PrintWriter(filePath)) {
             writer.println(content);
@@ -306,6 +326,7 @@ public class TextAnalyzer {
         }
     }
 
+    // Проверка существования файла
     private static boolean isFileExists(String filePath) {
         File file = new File(filePath);
         return !file.exists() || !file.isFile();
